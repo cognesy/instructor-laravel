@@ -8,7 +8,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | The default LLM connection to use for inference and structured output.
-    | This can be overridden at runtime using ->using('connection').
+    | This can be overridden at runtime using facade connection methods,
+    | e.g. Inference::connection('anthropic').
     |
     */
 

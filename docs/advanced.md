@@ -178,26 +178,40 @@ $contact = StructuredOutput::with(
 Different LLMs support different output modes:
 
 ```php
-use Cognesy\Polyglot\Inference\Enums\OutputMode;
+use Cognesy\Instructor\Enums\OutputMode;
+use Cognesy\Instructor\StructuredOutputRuntime;
+use Cognesy\Polyglot\Inference\LLMProvider;
+
+$jsonSchemaRuntime = StructuredOutputRuntime::fromProvider(LLMProvider::new())
+    ->withOutputMode(OutputMode::JsonSchema);
+
+$toolsRuntime = StructuredOutputRuntime::fromProvider(LLMProvider::new())
+    ->withOutputMode(OutputMode::Tools);
+
+$jsonRuntime = StructuredOutputRuntime::fromProvider(LLMProvider::new())
+    ->withOutputMode(OutputMode::Json);
+
+$mdJsonRuntime = StructuredOutputRuntime::fromProvider(LLMProvider::new())
+    ->withOutputMode(OutputMode::MdJson);
 
 // JSON Schema mode (recommended for OpenAI)
-$result = StructuredOutput::with(...)
-    ->withOutputMode(OutputMode::JsonSchema)
+$result = StructuredOutput::withRuntime($jsonSchemaRuntime)
+    ->with(...)
     ->get();
 
 // Tool/Function calling mode
-$result = StructuredOutput::with(...)
-    ->withOutputMode(OutputMode::Tools)
+$result = StructuredOutput::withRuntime($toolsRuntime)
+    ->with(...)
     ->get();
 
 // Simple JSON mode
-$result = StructuredOutput::with(...)
-    ->withOutputMode(OutputMode::Json)
+$result = StructuredOutput::withRuntime($jsonRuntime)
+    ->with(...)
     ->get();
 
 // Markdown JSON (for Gemini)
-$result = StructuredOutput::with(...)
-    ->withOutputMode(OutputMode::MdJson)
+$result = StructuredOutput::withRuntime($mdJsonRuntime)
+    ->with(...)
     ->get();
 ```
 
@@ -278,7 +292,7 @@ class AIService
     // Fast, cheap extraction for simple tasks
     public function quickExtract(string $text, string $model): mixed
     {
-        return StructuredOutput::using('groq')
+        return StructuredOutput::connection('groq')
             ->with(messages: $text, responseModel: $model)
             ->get();
     }
@@ -286,7 +300,7 @@ class AIService
     // High-quality extraction for complex tasks
     public function precisionExtract(string $text, string $model): mixed
     {
-        return StructuredOutput::using('anthropic')
+        return StructuredOutput::connection('anthropic')
             ->withModel('claude-3-opus-20240229')
             ->with(messages: $text, responseModel: $model)
             ->get();
@@ -295,7 +309,7 @@ class AIService
     // Local extraction for sensitive data
     public function privateExtract(string $text, string $model): mixed
     {
-        return StructuredOutput::using('ollama')
+        return StructuredOutput::connection('ollama')
             ->with(messages: $text, responseModel: $model)
             ->get();
     }
@@ -433,7 +447,7 @@ class FallbackExtractor
     {
         foreach ($this->providers as $provider) {
             try {
-                return StructuredOutput::using($provider)
+                return StructuredOutput::connection($provider)
                     ->with(messages: $text, responseModel: $model)
                     ->get();
             } catch (\Throwable $e) {
