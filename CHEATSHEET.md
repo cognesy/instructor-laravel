@@ -1,3 +1,9 @@
+---
+title: Laravel
+description: Laravel integration — service provider, facades, config publishing, and Artisan commands
+package: laravel
+---
+
 # Laravel Package Cheatsheet
 
 Code-verified reference for `packages/laravel`.
@@ -19,6 +25,7 @@ Provided by `InstructorServiceProvider::provides()`:
 - `Cognesy\Events\Contracts\CanHandleEvents`
 - `Cognesy\Config\Contracts\CanProvideConfig`
 - `Cognesy\Http\HttpClient`
+- `Cognesy\Http\Contracts\CanSendHttpRequests`
 - `Cognesy\Polyglot\Inference\Inference`
 - `Cognesy\Polyglot\Embeddings\Embeddings`
 - `Cognesy\Instructor\StructuredOutput`
@@ -70,13 +77,17 @@ Provided by `InstructorServiceProvider::provides()`:
 `EmbeddingsFake`:
 - setup: `respondWith(string $pattern, array $embedding)`, `withDimensions(int $dimensions)`
 - assertions: `assertCalled`, `assertCalledTimes`, `assertNotCalled`, `assertCalledWith`, `assertUsedConnection`, `assertUsedModel`
+- results: `get(): object`, `first(): array`, `all(): array`
 - inspection: `recorded(): array`
 
 `AgentCtrlFake`:
 - builders: `claudeCode()`, `codex()`, `openCode()`, `make(AgentType $type)`
-- execution: `execute(string $prompt)`, `executeStreaming(string $prompt)`
+- builder config: `withModel(string $model)`, `withTimeout(int $seconds)`, `inDirectory(string $path)`, `withSandboxDriver(mixed $driver)`, `withMaxRetries(int $retries)`
+- builder callbacks: `onText(callable $handler)`, `onToolUse(callable $handler)`, `onComplete(callable $handler)`
+- execution: `execute(string $prompt): AgentResponse`, `executeStreaming(string $prompt): AgentResponse`
 - assertions: `assertExecuted`, `assertNotExecuted`, `assertExecutedTimes`, `assertExecutedWith`, `assertAgentType`, `assertUsedClaudeCode`, `assertUsedCodex`, `assertUsedOpenCode`, `assertStreaming`
-- helpers: `getExecutions(): array`, `reset(): void`, `response(...)`, `toolCall(...)`
+- inspection: `getExecutions(): array`, `reset(): void`
+- static helpers: `AgentCtrlFake::response(...)`, `AgentCtrlFake::toolCall(...)`
 
 ## Artisan Commands
 
