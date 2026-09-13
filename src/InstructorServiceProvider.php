@@ -68,6 +68,7 @@ use Cognesy\Polyglot\Inference\Contracts\CanCreateInference;
 use Cognesy\Polyglot\Inference\Inference;
 use Cognesy\Polyglot\Inference\InferenceRuntime;
 use Cognesy\Polyglot\Inference\LLMProvider;
+use Cognesy\Polyglot\Inference\Models\ModelCatalog;
 use Cognesy\Polyglot\Telemetry\PolyglotTelemetryProjector;
 use Cognesy\Telemetry\Adapters\Langfuse\LangfuseConfig;
 use Cognesy\Telemetry\Adapters\Langfuse\LangfuseExporter;
@@ -419,6 +420,7 @@ class InstructorServiceProvider extends ServiceProvider
      */
     protected function registerInference(): void
     {
+        $this->app->singleton(ModelCatalog::class, static fn (): ModelCatalog => ModelCatalog::discover());
         $this->app->singleton(Inference::class, function (Container $app) {
             $runtime = InferenceRuntime::fromProvider(
                 provider: LLMProvider::fromLLMConfig($this->resolveLLMConfig($app)),
@@ -469,6 +471,7 @@ class InstructorServiceProvider extends ServiceProvider
                 events: $app->make(CanHandleEvents::class),
                 httpClient: $app->make(CanSendHttpRequests::class),
                 structuredConfig: $this->resolveStructuredOutputConfig($app),
+                models: $app->make(ModelCatalog::class),
             );
             $instructor = new StructuredOutput($runtime);
 
@@ -508,6 +511,7 @@ class InstructorServiceProvider extends ServiceProvider
                 events: $app->make(CanHandleEvents::class),
                 httpClient: $app->make(CanSendHttpRequests::class),
                 structuredConfig: $this->resolveStructuredOutputConfig($app),
+                models: $app->make(ModelCatalog::class),
             );
         });
     }
@@ -1088,7 +1092,10 @@ class InstructorServiceProvider extends ServiceProvider
         $apiUrl = (string) ($connection['api_url'] ?? '');
         $endpoint = (string) ($connection['endpoint'] ?? $this->defaultLlmEndpoint($driver, $model));
 
-        $known = ['driver', 'api_url', 'api_key', 'endpoint', 'model', 'max_tokens', 'options'];
+        $known = [
+            'driver', 'api_url', 'api_key', 'endpoint', 'model', 'max_tokens',
+            'allow_lossy_fallback', 'options',
+        ];
         $extraOptions = array_diff_key($connection, array_flip($known));
         $options = match (true) {
             isset($connection['options']) && is_array($connection['options']) => array_merge($extraOptions, $connection['options']),
@@ -1102,6 +1109,7 @@ class InstructorServiceProvider extends ServiceProvider
             'endpoint' => $endpoint,
             'model' => $model,
             'maxTokens' => (int) ($connection['max_tokens'] ?? 4096),
+            'allowLossyFallback' => $connection['allow_lossy_fallback'] ?? false,
             'options' => $options,
         ]);
     }
